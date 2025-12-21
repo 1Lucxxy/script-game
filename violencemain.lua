@@ -16,9 +16,9 @@ local Camera = workspace.CurrentCamera
 -- WINDOW & TABS
 --==================================
 local Window = Rayfield:CreateWindow({
-    Name = "ESP Highlight (Complete)",
+    Name = "ESP Highlight (Ultimate)",
     LoadingTitle = "ESP System",
-    LoadingSubtitle = "Final Version",
+    LoadingSubtitle = "Final + Debug Tools",
     ConfigurationSaving = { Enabled = false }
 })
 
@@ -50,7 +50,7 @@ local function clearHighlights()
 end
 
 --==================================
--- PLAYER ESP (TEAM BASED)
+-- PLAYER ESP (TEAM BASED ✔)
 --==================================
 local PlayerESPEnabled = false
 
@@ -67,7 +67,7 @@ local function updatePlayers()
 
             if teamName == "killer" then
                 addHighlight(plr.Character, Color3.fromRGB(255,0,0))
-            elseif teamName == "survivor" then
+            elseif teamName == "survivors" then
                 addHighlight(plr.Character, Color3.fromRGB(0,255,0))
             end
         end
@@ -176,32 +176,26 @@ RunService.RenderStepped:Connect(function()
 end)
 
 --==================================
--- MISC TAB : CEK TEAM MAP
+-- MISC : CEK TEAM MAP
 --==================================
 MiscTab:CreateButton({
     Name = "Cek Team (Map)",
     Callback = function()
         local teams = TeamsService:GetTeams()
-
-        if #teams == 0 then
-            Rayfield:Notify({
-                Title = "Cek Team",
-                Content = "Tidak ada Team di map ini",
-                Duration = 6
-            })
-            return
-        end
-
         local result = "Team di map ini:\n"
 
-        for _,team in ipairs(teams) do
-            local count = 0
-            for _,plr in ipairs(Players:GetPlayers()) do
-                if plr.Team == team then
-                    count += 1
+        if #teams == 0 then
+            result = "Tidak ada TeamService di map ini"
+        else
+            for _,team in ipairs(teams) do
+                local count = 0
+                for _,plr in ipairs(Players:GetPlayers()) do
+                    if plr.Team == team then
+                        count += 1
+                    end
                 end
+                result ..= "- " .. team.Name .. " : " .. count .. " player\n"
             end
-            result ..= "- " .. team.Name .. " : " .. count .. " player\n"
         end
 
         Rayfield:Notify({
@@ -211,6 +205,46 @@ MiscTab:CreateButton({
         })
 
         print("===== TEAM MAP CHECK =====")
+        print(result)
+    end
+})
+
+--==================================
+-- MISC : CEK MODEL SEKITAR PLAYER (5 STUDS)
+--==================================
+MiscTab:CreateButton({
+    Name = "Cek Model Sekitar (5 studs)",
+    Callback = function()
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        local found = {}
+        local result = "Model sekitar (5 studs):\n"
+
+        for _,v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("Model") and v.PrimaryPart then
+                local dist = (v.PrimaryPart.Position - hrp.Position).Magnitude
+                if dist <= 5 then
+                    if not found[v.Name] then
+                        found[v.Name] = true
+                        result ..= "- " .. v.Name .. "\n"
+                    end
+                end
+            end
+        end
+
+        if result == "Model sekitar (5 studs):\n" then
+            result ..= "Tidak ada model"
+        end
+
+        Rayfield:Notify({
+            Title = "Cek Model Sekitar",
+            Content = result,
+            Duration = 8
+        })
+
+        print("===== MODEL NEAR PLAYER =====")
         print(result)
     end
 })
