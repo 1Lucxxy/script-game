@@ -215,6 +215,90 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
+local InvisibleManual = false
+local InvisibleAuto   = false
+local AutoInvisibleEnabled = false
+local KillerDetectDistance = 25
+
+local function applyInvisible()
+    local char = LocalPlayer.Character
+    if not char then return end
+    local state = InvisibleManual or InvisibleAuto
+    for _,v in ipairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.LocalTransparencyModifier = state and 1 or 0
+            v.CanCollide = not state
+        elseif v:IsA("Decal") then
+            v.Transparency = state and 1 or 0
+        end
+    end
+end
+
+-- Manual toggle
+PlayerTab:CreateToggle({
+    Name="Invisible (Manual)",
+    Callback=function(v)
+        InvisibleManual = v
+        applyInvisible()
+    end
+})
+
+-- Auto toggle
+PlayerTab:CreateToggle({
+    Name="Auto Invisible (Killer Near)",
+    Callback=function(v)
+        AutoInvisibleEnabled = v
+        if not v then
+            InvisibleAuto = false
+            applyInvisible()
+        end
+    end
+})
+
+-- Distance slider
+PlayerTab:CreateSlider({
+    Name="Detect Distance",
+    Range={10,60},
+    Increment=1,
+    CurrentValue=KillerDetectDistance,
+    Callback=function(v)
+        KillerDetectDistance = v
+    end
+})
+
+-- Auto detection loop (TIDAK SENTUH HIGHLIGHT)
+task.spawn(function()
+    while task.wait(0.4) do
+        if not AutoInvisibleEnabled then continue end
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if not hrp then continue end
+
+        local killerNear = false
+        for _,plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer
+            and plr.Team
+            and string.lower(plr.Team.Name) == "killer"
+            and plr.Character
+            and plr.Character:FindFirstChild("HumanoidRootPart") then
+                if (plr.Character.HumanoidRootPart.Position - hrp.Position).Magnitude <= KillerDetectDistance then
+                    killerNear = true
+                    break
+                end
+            end
+        end
+
+        if killerNear ~= InvisibleAuto then
+            InvisibleAuto = killerNear
+            applyInvisible()
+        end
+    end
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(0.5)
+    applyInvisible()
+end)
 --==================================
 -- MISC: CEK TEAM MAP
 --==================================
