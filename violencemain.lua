@@ -26,7 +26,7 @@ local ESPTab  = Window:CreateTab("ESP", 4483362458)
 local MiscTab = Window:CreateTab("Misc", 4483362458)
 
 --==================================
--- HIGHLIGHT CORE (OUTLINE OFF ✔)
+-- HIGHLIGHT CORE (OUTLINE OFF TOTAL ✔)
 --==================================
 local Highlights = {}
 
@@ -36,7 +36,8 @@ local function addHighlight(obj, color)
     h.Adornee = obj
     h.FillColor = color
     h.FillTransparency = 0.8
-    h.OutlineTransparency = 1 -- ❌ OUTLINE MATI TOTAL
+    h.OutlineColor = color   -- FIX TOTAL
+    h.OutlineTransparency = 1 -- FIX TOTAL
     h.Parent = obj
     Highlights[obj] = h
 end
