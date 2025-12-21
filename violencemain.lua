@@ -185,7 +185,6 @@ local BOOST_SPEED  = 64
 
 PlayerTab:CreateToggle({
     Name = "WalkSpeed (64)",
-    CurrentValue = false,
     Callback = function(v)
         WalkSpeedEnabled = v
         local char = LocalPlayer.Character
@@ -198,17 +197,13 @@ PlayerTab:CreateToggle({
     end
 })
 
--- jaga biar ga di-reset game
 RunService.Heartbeat:Connect(function()
     if WalkSpeedEnabled and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum and hum.WalkSpeed ~= BOOST_SPEED then
-            hum.WalkSpeed = BOOST_SPEED
-        end
+        if hum then hum.WalkSpeed = BOOST_SPEED end
     end
 end)
 
--- reset ke normal saat respawn
 LocalPlayer.CharacterAdded:Connect(function(char)
     task.wait(0.3)
     local hum = char:FindFirstChildOfClass("Humanoid")
