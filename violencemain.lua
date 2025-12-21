@@ -118,35 +118,69 @@ local function toggleModelESP(name, color, enabled)
 end
 
 --==================================
--- OBJECT ESP TOGGLES (TIDAK SALING MATI)
+-- OBJECT ESP (FIXED)
 --==================================
+local ObjectESPEnabled = {
+    Generator = false,
+    Hook = false,
+    Window = false,
+    Gift = false
+}
+
+local ObjectColors = {
+    Generator = Color3.fromRGB(255,255,0),
+    Hook      = Color3.fromRGB(255,0,255),
+    Window    = Color3.fromRGB(0,170,255),
+    Gift      = Color3.fromRGB(255,140,0)
+}
+
+local function updateObjectESP()
+    for _,v in ipairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and ObjectESPEnabled[v.Name] then
+            addHighlight(v, ObjectColors[v.Name])
+        end
+    end
+end
+
+-- Toggle UI
 ESPTab:CreateToggle({
     Name="Highlight Generator",
     Callback=function(v)
-        toggleModelESP("Generator", Color3.fromRGB(255,255,0), v)
+        ObjectESPEnabled.Generator = v
+        if v then updateObjectESP() end
     end
 })
 
 ESPTab:CreateToggle({
     Name="Highlight Hook",
     Callback=function(v)
-        toggleModelESP("Hook", Color3.fromRGB(255,0,255), v)
+        ObjectESPEnabled.Hook = v
+        if v then updateObjectESP() end
     end
 })
 
 ESPTab:CreateToggle({
     Name="Highlight Window",
     Callback=function(v)
-        toggleModelESP("Window", Color3.fromRGB(0,170,255), v)
+        ObjectESPEnabled.Window = v
+        if v then updateObjectESP() end
     end
 })
 
 ESPTab:CreateToggle({
     Name="Highlight Event (Gift)",
     Callback=function(v)
-        toggleModelESP("Gift", Color3.fromRGB(255,140,0), v)
+        ObjectESPEnabled.Gift = v
+        if v then updateObjectESP() end
     end
 })
+
+-- Auto scan buat object yang spawn belakangan
+workspace.DescendantAdded:Connect(function(v)
+    if v:IsA("Model") and ObjectESPEnabled[v.Name] then
+        addHighlight(v, ObjectColors[v.Name])
+    end
+end)
 
 --==================================
 -- CROSSHAIR DOT
