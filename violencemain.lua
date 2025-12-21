@@ -1,7 +1,18 @@
 --==================================================
--- RAYFIELD
+-- SAFE RAYFIELD LOAD (ANTI UI HILANG)
 --==================================================
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+local success, Rayfield = pcall(function()
+    return loadstring(game:HttpGet(
+        "https://raw.githubusercontent.com/shlexware/Rayfield/main/source"
+    ))()
+end)
+
+if not success or not Rayfield then
+    warn("Rayfield gagal load")
+    return
+end
+
+task.wait(1) -- penting untuk executor mobile
 
 --==================================================
 -- SERVICES
@@ -17,8 +28,8 @@ local Camera = workspace.CurrentCamera
 --==================================================
 local Window = Rayfield:CreateWindow({
     Name = "ESP FINAL LENGKAP",
-    LoadingTitle = "Loading",
-    LoadingSubtitle = "Stable & No FPS Drop",
+    LoadingTitle = "Loading UI",
+    LoadingSubtitle = "Stable - No FPS Drop",
     ConfigurationSaving = {Enabled = false}
 })
 
@@ -27,7 +38,7 @@ local PlayerTab = Window:CreateTab("Player", 4483362458)
 local MiscTab   = Window:CreateTab("Misc", 4483362458)
 
 --==================================================
--- PLAYER ESP (SURVIVOR & KILLER)
+-- PLAYER ESP (SURVIVORS & KILLER)
 --==================================================
 local PlayerESPEnabled = false
 local PlayerHighlights = {}
@@ -47,12 +58,12 @@ local function applyESP(plr)
         PlayerHighlights[plr]:Destroy()
     end
 
-    local teamName = string.lower(plr.Team.Name)
+    local team = string.lower(plr.Team.Name)
     local color
 
-    if teamName == "killer" then
+    if team == "killer" then
         color = Color3.fromRGB(255,0,0)
-    elseif teamName == "survivors" then
+    elseif team == "survivors" then
         color = Color3.fromRGB(0,255,0)
     else
         return
@@ -86,11 +97,7 @@ ESPTab:CreateToggle({
     Name = "ESP Survivor & Killer",
     Callback = function(v)
         PlayerESPEnabled = v
-        if v then
-            refreshESP()
-        else
-            clearPlayerESP()
-        end
+        if v then refreshESP() else clearPlayerESP() end
     end
 })
 
@@ -132,25 +139,29 @@ ESPTab:CreateToggle({Name="Window",Callback=function(v) if v then scanObject("Wi
 ESPTab:CreateToggle({Name="Event / Gift",Callback=function(v) if v then scanObject("Gift") else clearObject("Gift") end end})
 
 --==================================================
--- CROSSHAIR DOT
+-- CROSSHAIR (SAFE)
 --==================================================
-local Crosshair = Drawing.new("Circle")
-Crosshair.Radius = 2
-Crosshair.Filled = true
-Crosshair.Color = Color3.fromRGB(255,255,255)
-Crosshair.Visible = false
 local CrosshairEnabled = false
+local Crosshair
+
+pcall(function()
+    Crosshair = Drawing.new("Circle")
+    Crosshair.Radius = 2
+    Crosshair.Filled = true
+    Crosshair.Color = Color3.fromRGB(255,255,255)
+    Crosshair.Visible = false
+end)
 
 ESPTab:CreateToggle({
     Name="Crosshair Dot",
     Callback=function(v)
         CrosshairEnabled=v
-        Crosshair.Visible=v
+        if Crosshair then Crosshair.Visible=v end
     end
 })
 
 RunService.RenderStepped:Connect(function()
-    if CrosshairEnabled then
+    if CrosshairEnabled and Crosshair then
         Crosshair.Position = Vector2.new(
             Camera.ViewportSize.X/2,
             Camera.ViewportSize.Y/2
@@ -179,18 +190,22 @@ PlayerTab:CreateToggle({
 })
 
 --==================================================
--- NOCLIP
+-- NOCLIP (LIGHT)
 --==================================================
+local NoclipConn
 MiscTab:CreateToggle({
     Name="Noclip",
     Callback=function(v)
-        RunService.Stepped:Connect(function()
-            if v and LocalPlayer.Character then
-                for _,p in ipairs(LocalPlayer.Character:GetDescendants()) do
-                    if p:IsA("BasePart") then p.CanCollide=false end
+        if NoclipConn then NoclipConn:Disconnect() NoclipConn=nil end
+        if v then
+            NoclipConn = RunService.Stepped:Connect(function()
+                if LocalPlayer.Character then
+                    for _,p in ipairs(LocalPlayer.Character:GetDescendants()) do
+                        if p:IsA("BasePart") then p.CanCollide=false end
+                    end
                 end
-            end
-        end)
+            end)
+        end
     end
 })
 
@@ -205,25 +220,5 @@ MiscTab:CreateButton({
             txt.."- "..t.Name.."\n"
         end
         Rayfield:Notify({Title="Team Info",Content=txt,Duration=6})
-    end
-})
-
---==================================================
--- MISC : CEK MODEL SEKITAR
---==================================================
-MiscTab:CreateButton({
-    Name="Cek Model Sekitar (5 studs)",
-    Callback=function()
-        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if not hrp then return end
-        local txt="Model sekitar:\n"
-        for _,v in ipairs(workspace:GetChildren()) do
-            if v:IsA("Model") and v.PrimaryPart then
-                if (v.PrimaryPart.Position-hrp.Position).Magnitude<=5 then
-                    txt.."- "..v.Name.."\n"
-                end
-            end
-        end
-        Rayfield:Notify({Title="Nearby",Content=txt,Duration=6})
     end
 })
