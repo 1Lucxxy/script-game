@@ -1,17 +1,15 @@
 --==================================
 -- MAP LOCK : VIOLENCE DISTRICT ONLY
 --==================================
-local VALID_MAP = false
+local ALLOWED_PLACE_ID = 93978595733734
 
-pcall(function()
-    if string.find(string.lower(game.Name), "violence") then
-        VALID_MAP = true
-    end
-end)
-
-if not VALID_MAP then
-    warn("[ESP] Script hanya berjalan di map: Violence District")
+if game.PlaceId ~= ALLOWED_PLACE_ID then
+    warn("[ESP] Script hanya bisa digunakan di Violence District")
     return
+end
+
+if not game:IsLoaded() then
+    game.Loaded:Wait()
 end
 
 --==================================
@@ -35,7 +33,7 @@ local Camera = workspace.CurrentCamera
 local Window = Rayfield:CreateWindow({
     Name = "Violence District ESP",
     LoadingTitle = "Violence District",
-    LoadingSubtitle = "ESP System Loaded",
+    LoadingSubtitle = "ESP Loaded",
     ConfigurationSaving = { Enabled = false }
 })
 
@@ -67,7 +65,7 @@ local function removeHighlight(obj)
 end
 
 --==================================
--- PLAYER ESP
+-- PLAYER ESP (SURVIVOR / KILLER)
 --==================================
 local PlayerESPEnabled = false
 
@@ -136,29 +134,29 @@ end
 -- OBJECT ESP TOGGLES
 --==================================
 ESPTab:CreateToggle({
-    Name = "Highlight Generator",
-    Callback = function(v)
+    Name="Highlight Generator",
+    Callback=function(v)
         toggleModelESP("Generator", Color3.fromRGB(255,255,0), v)
     end
 })
 
 ESPTab:CreateToggle({
-    Name = "Highlight Hook",
-    Callback = function(v)
+    Name="Highlight Hook",
+    Callback=function(v)
         toggleModelESP("Hook", Color3.fromRGB(255,0,255), v)
     end
 })
 
 ESPTab:CreateToggle({
-    Name = "Highlight Window",
-    Callback = function(v)
+    Name="Highlight Window",
+    Callback=function(v)
         toggleModelESP("Window", Color3.fromRGB(0,170,255), v)
     end
 })
 
 ESPTab:CreateToggle({
-    Name = "Highlight Event (Gift)",
-    Callback = function(v)
+    Name="Highlight Event (Gift)",
+    Callback=function(v)
         toggleModelESP("Gift", Color3.fromRGB(255,140,0), v)
     end
 })
@@ -174,8 +172,8 @@ Crosshair.Thickness = 1
 Crosshair.Visible = false
 
 ESPTab:CreateToggle({
-    Name = "Crosshair Dot",
-    Callback = function(v)
+    Name="Crosshair Dot",
+    Callback=function(v)
         CrosshairEnabled = v
         Crosshair.Visible = v
     end
@@ -184,31 +182,31 @@ ESPTab:CreateToggle({
 RunService.RenderStepped:Connect(function()
     if CrosshairEnabled then
         Crosshair.Position = Vector2.new(
-            Camera.ViewportSize.X / 2,
-            Camera.ViewportSize.Y / 2
+            Camera.ViewportSize.X/2,
+            Camera.ViewportSize.Y/2
         )
     end
 end)
 
 --==================================
--- PLAYER TAB : WALKSPEED ONLY
+-- PLAYER TAB : WALKSPEED
 --==================================
 local WalkSpeedEnabled = false
 local WalkSpeedValue = 16
 
 local WalkSpeedSlider = PlayerTab:CreateSlider({
-    Name = "WalkSpeed",
-    Range = {16,150},
-    Increment = 1,
-    CurrentValue = WalkSpeedValue,
-    Callback = function(v)
+    Name="WalkSpeed",
+    Range={16,150},
+    Increment=1,
+    CurrentValue=WalkSpeedValue,
+    Callback=function(v)
         WalkSpeedValue = v
     end
 })
 
 PlayerTab:CreateToggle({
-    Name = "Enable WalkSpeed",
-    Callback = function(v)
+    Name="Enable WalkSpeed",
+    Callback=function(v)
         WalkSpeedEnabled = v
         WalkSpeedSlider:SetDisabled(not v)
     end
@@ -221,7 +219,9 @@ end)
 RunService.Heartbeat:Connect(function()
     if WalkSpeedEnabled then
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum.WalkSpeed = WalkSpeedValue end
+        if hum then
+            hum.WalkSpeed = WalkSpeedValue
+        end
     end
 end)
 
@@ -229,33 +229,31 @@ end)
 -- MISC : CEK TEAM MAP
 --==================================
 MiscTab:CreateButton({
-    Name = "Cek Team (Map)",
-    Callback = function()
-        local teams = TeamsService:GetTeams()
-        local text = "Team di map:\n"
-
-        for _,team in ipairs(teams) do
+    Name="Cek Team (Map)",
+    Callback=function()
+        local result = "Team di map:\n"
+        for _,team in ipairs(TeamsService:GetTeams()) do
             local count = 0
             for _,plr in ipairs(Players:GetPlayers()) do
                 if plr.Team == team then count += 1 end
             end
-            text ..= "- "..team.Name.." : "..count.." player\n"
+            result ..= "- "..team.Name.." : "..count.." player\n"
         end
 
         Rayfield:Notify({
-            Title = "Violence District",
-            Content = text,
-            Duration = 8
+            Title="Violence District",
+            Content=result,
+            Duration=8
         })
     end
 })
 
 --==================================
--- MISC : CEK MODEL 5 STUDS
+-- MISC : CEK MODEL DEKAT PLAYER
 --==================================
 MiscTab:CreateButton({
-    Name = "Cek Model Sekitar (5 studs)",
-    Callback = function()
+    Name="Cek Model Sekitar (5 studs)",
+    Callback=function()
         local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if not hrp then return end
 
@@ -276,9 +274,9 @@ MiscTab:CreateButton({
         end
 
         Rayfield:Notify({
-            Title = "Cek Model",
-            Content = result,
-            Duration = 8
+            Title="Cek Model",
+            Content=result,
+            Duration=8
         })
     end
 })
