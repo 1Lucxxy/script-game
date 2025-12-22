@@ -215,6 +215,38 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
+local InvisibleEnabled = false
+
+local function setInvisible(char, state)
+    for _,v in ipairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.LocalTransparencyModifier = state and 1 or 0
+            v.CanCollide = not state
+        elseif v:IsA("Decal") then
+            v.Transparency = state and 1 or 0
+        end
+    end
+end
+
+PlayerTab:CreateToggle({
+    Name = "Invisible (Non-Visual)",
+    CurrentValue = false,
+    Callback = function(v)
+        InvisibleEnabled = v
+        local char = LocalPlayer.Character
+        if char then
+            setInvisible(char, v)
+        end
+    end
+})
+
+-- auto apply saat respawn
+LocalPlayer.CharacterAdded:Connect(function(char)
+    task.wait(0.5)
+    if InvisibleEnabled then
+        setInvisible(char, true)
+    end
+end)
 --==================================
 -- MISC: CEK TEAM MAP
 --==================================
