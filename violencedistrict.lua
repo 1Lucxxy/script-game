@@ -1,18 +1,4 @@
 --==================================
--- MAP LOCK : VIOLENCE DISTRICT ONLY
---==================================
-local ALLOWED_PLACE_ID = 93978595733734
-
-if game.PlaceId ~= ALLOWED_PLACE_ID then
-    warn("[ESP] Script hanya bisa digunakan di Violence District")
-    return
-end
-
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
-
---==================================
 -- RAYFIELD LOAD
 --==================================
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
