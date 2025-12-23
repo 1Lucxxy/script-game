@@ -1,5 +1,8 @@
 -- SERVICES
 local Players = game:GetService("Players")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
 local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
@@ -221,61 +224,58 @@ VisualTab:CreateButton({
 -- ================= COMBAT TAB =================
 local CombatTab = Window:CreateTab("Combat", 4483362458)
 
-local Camera = workspace.CurrentCamera
-local RunService = game:GetService("RunService")
-local Drawing = Drawing
-
--- ================= COMBAT SETTINGS =================
 local Combat = {
     AimHead = false,
     AimBody = false,
     POV = false,
     ShowCircle = false,
-    POVRadius = 150,
-    Priority = "Crosshair", -- Crosshair / Distance / Health
-    Smoothness = 0.15
+    Radius = 150,
+    Priority = "Crosshair",
+    Smooth = 0.15,
+    TeamCheck = false
 }
 
--- ================= POV CIRCLE (VISUAL) =================
-local POVCircle = Drawing.new("Circle")
-POVCircle.Visible = false
-POVCircle.Color = Color3.fromRGB(255,255,255)
-POVCircle.Thickness = 1
-POVCircle.NumSides = 100
-POVCircle.Filled = false
-POVCircle.Transparency = 1
-POVCircle.Radius = Combat.POVRadius
+-- ================= POV CIRCLE =================
+local Circle = Drawing.new("Circle")
+Circle.Visible = false
+Circle.Filled = false
+Circle.Thickness = 1
+Circle.NumSides = 64
+Circle.Color = Color3.fromRGB(255,255,255)
+Circle.Transparency = 1
 
--- ================= TARGET SELECT =================
+-- ================= TEAM CHECK =================
+local function IsValidTarget(plr)
+    if plr == LocalPlayer then return false end
+    if Combat.TeamCheck and plr.Team == LocalPlayer.Team then return false end
+    return true
+end
+
+-- ================= GET TARGET =================
 local function GetTarget()
-    local bestTarget
-    local bestValue = math.huge
+    local best, bestVal = nil, math.huge
     local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
 
-    for _,p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and IsEnemy(p) and p.Character then
-            local hum = p.Character:FindFirstChildOfClass("Humanoid")
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if IsValidTarget(plr) and plr.Character then
+            local hum = plr.Character:FindFirstChildOfClass("Humanoid")
             local part =
-                Combat.AimHead and p.Character:FindFirstChild("Head")
-                or Combat.AimBody and p.Character:FindFirstChild("HumanoidRootPart")
+                Combat.AimHead and plr.Character:FindFirstChild("Head") or
+                Combat.AimBody and plr.Character:FindFirstChild("HumanoidRootPart")
 
             if hum and part and hum.Health > 0 then
-                local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
-                if onScreen then
-                    local screenDist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                    if not Combat.POV or screenDist <= Combat.POVRadius then
-                        local value
-                        if Combat.Priority == "Crosshair" then
-                            value = screenDist
-                        elseif Combat.Priority == "Distance" then
-                            value = (part.Position - Camera.CFrame.Position).Magnitude
-                        elseif Combat.Priority == "Health" then
-                            value = hum.Health
-                        end
+                local pos, vis = Camera:WorldToViewportPoint(part.Position)
+                if vis then
+                    local dist = (Vector2.new(pos.X,pos.Y) - center).Magnitude
+                    if not Combat.POV or dist <= Combat.Radius then
+                        local val = Combat.Priority == "Crosshair" and dist
+                            or Combat.Priority == "Distance" and
+                            (part.Position - Camera.CFrame.Position).Magnitude
+                            or hum.Health
 
-                        if value < bestValue then
-                            bestValue = value
-                            bestTarget = part
+                        if val < bestVal then
+                            bestVal = val
+                            best = part
                         end
                     end
                 end
@@ -283,76 +283,24 @@ local function GetTarget()
         end
     end
 
-    return bestTarget
+    return best
 end
 
 -- ================= AIM LOOP =================
 RunService.RenderStepped:Connect(function()
     if not (Combat.AimHead or Combat.AimBody) then return end
-
     local target = GetTarget()
     if target then
         Camera.CFrame = Camera.CFrame:Lerp(
             CFrame.new(Camera.CFrame.Position, target.Position),
-            Combat.Smoothness
+            Combat.Smooth
         )
     end
 end)
 
 -- ================= POV UPDATE =================
 RunService.RenderStepped:Connect(function()
-    POVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
-    POVCircle.Radius = Combat.POVRadius
-    POVCircle.Visible = Combat.ShowCircle and Combat.POV
+    Circle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    Circle.Radius = Combat.Radius
+    Circle.Visible = Combat.ShowCircle and Combat.POV
 end)
-
--- ================= UI COMBAT =================
-CombatTab:CreateToggle({
-    Name = "Aim Head",
-    Callback = function(v)
-        Combat.AimHead = v
-        if v then Combat.AimBody = false end
-    end
-})
-
-CombatTab:CreateToggle({
-    Name = "Aim Body",
-    Callback = function(v)
-        Combat.AimBody = v
-        if v then Combat.AimHead = false end
-    end
-})
-
-CombatTab:CreateToggle({
-    Name = "Enable POV (FOV)",
-    Callback = function(v)
-        Combat.POV = v
-    end
-})
-
-CombatTab:CreateToggle({
-    Name = "Show POV Circle",
-    Callback = function(v)
-        Combat.ShowCircle = v
-    end
-})
-
-CombatTab:CreateSlider({
-    Name = "POV Radius",
-    Range = {50, 350},
-    Increment = 10,
-    CurrentValue = 150,
-    Callback = function(v)
-        Combat.POVRadius = v
-    end
-})
-
-CombatTab:CreateDropdown({
-    Name = "Target Priority",
-    Options = {"Crosshair", "Distance", "Health"},
-    CurrentOption = "Crosshair",
-    Callback = function(v)
-        Combat.Priority = v
-    end
-})
-
