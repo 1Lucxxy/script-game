@@ -223,145 +223,90 @@ local CombatTab = Window:CreateTab("Combat", 4483362458)
 
 local Camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local Drawing = Drawing
 
--- SETTINGS COMBAT
+-- ================= COMBAT SETTINGS =================
 local Combat = {
-    Dot = false,
-    Hitbox = false,
-    HitboxSize = 6,
     AimHead = false,
     AimBody = false,
     POV = false,
-    POVRadius = 120
+    ShowCircle = false,
+    POVRadius = 150,
+    Priority = "Crosshair", -- Crosshair / Distance / Health
+    Smoothness = 0.15
 }
 
--- ================= DOT CROSSHAIR =================
-local DotGui = Instance.new("ScreenGui", CoreGui)
-DotGui.Name = "DotCrosshair"
-DotGui.Enabled = false
+-- ================= POV CIRCLE (VISUAL) =================
+local POVCircle = Drawing.new("Circle")
+POVCircle.Visible = false
+POVCircle.Color = Color3.fromRGB(255,255,255)
+POVCircle.Thickness = 1
+POVCircle.NumSides = 100
+POVCircle.Filled = false
+POVCircle.Transparency = 1
+POVCircle.Radius = Combat.POVRadius
 
-local Dot = Instance.new("Frame", DotGui)
-Dot.Size = UDim2.fromOffset(4,4)
-Dot.Position = UDim2.fromScale(0.5,0.5)
-Dot.AnchorPoint = Vector2.new(0.5,0.5)
-Dot.BackgroundColor3 = Color3.new(1,1,1)
-Dot.BorderSizePixel = 0
-Dot.BackgroundTransparency = 0
-
--- ================= HITBOX =================
-local HitboxCache = {}
-
-local function ApplyHitbox(p)
-    if not Combat.Hitbox then return end
-    if p == LocalPlayer then return end
-    if not IsEnemy(p) then return end
-    if not p.Character then return end
-
-    local hrp = p.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-
-    hrp.Size = Vector3.new(
-        Combat.HitboxSize,
-        Combat.HitboxSize,
-        Combat.HitboxSize
-    )
-    hrp.CanCollide = false
-    hrp.Transparency = 0.6
-
-    HitboxCache[p] = hrp
-end
-
-local function ClearHitbox()
-    for _,hrp in pairs(HitboxCache) do
-        if hrp then
-            hrp.Size = Vector3.new(2,2,1)
-            hrp.Transparency = 1
-        end
-    end
-    HitboxCache = {}
-end
-
--- ================= AIM ASSIST =================
-local function GetClosestTarget()
-    local closest, shortest = nil, Combat.POVRadius
+-- ================= TARGET SELECT =================
+local function GetTarget()
+    local bestTarget
+    local bestValue = math.huge
+    local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
 
     for _,p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and IsEnemy(p) and p.Character then
+            local hum = p.Character:FindFirstChildOfClass("Humanoid")
             local part =
                 Combat.AimHead and p.Character:FindFirstChild("Head")
                 or Combat.AimBody and p.Character:FindFirstChild("HumanoidRootPart")
 
-            if part then
-                local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+            if hum and part and hum.Health > 0 then
+                local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
                 if onScreen then
-                    local dist = (Vector2.new(screenPos.X, screenPos.Y)
-                        - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                    local screenDist = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                    if not Combat.POV or screenDist <= Combat.POVRadius then
+                        local value
+                        if Combat.Priority == "Crosshair" then
+                            value = screenDist
+                        elseif Combat.Priority == "Distance" then
+                            value = (part.Position - Camera.CFrame.Position).Magnitude
+                        elseif Combat.Priority == "Health" then
+                            value = hum.Health
+                        end
 
-                    if dist < shortest then
-                        shortest = dist
-                        closest = part
+                        if value < bestValue then
+                            bestValue = value
+                            bestTarget = part
+                        end
                     end
                 end
             end
         end
     end
 
-    return closest
+    return bestTarget
 end
 
+-- ================= AIM LOOP =================
 RunService.RenderStepped:Connect(function()
     if not (Combat.AimHead or Combat.AimBody) then return end
-    if Combat.POV and Combat.POVRadius <= 0 then return end
 
-    local target = GetClosestTarget()
+    local target = GetTarget()
     if target then
         Camera.CFrame = Camera.CFrame:Lerp(
             CFrame.new(Camera.CFrame.Position, target.Position),
-            0.15
+            Combat.Smoothness
         )
     end
 end)
 
+-- ================= POV UPDATE =================
+RunService.RenderStepped:Connect(function()
+    POVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    POVCircle.Radius = Combat.POVRadius
+    POVCircle.Visible = Combat.ShowCircle and Combat.POV
+end)
+
 -- ================= UI COMBAT =================
-CombatTab:CreateToggle({
-    Name = "Dot Crosshair",
-    Callback = function(v)
-        Combat.Dot = v
-        DotGui.Enabled = v
-    end
-})
-
-CombatTab:CreateToggle({
-    Name = "Hitbox Expander",
-    Callback = function(v)
-        Combat.Hitbox = v
-        if not v then
-            ClearHitbox()
-        else
-            for _,p in pairs(Players:GetPlayers()) do
-                ApplyHitbox(p)
-            end
-        end
-    end
-})
-
-CombatTab:CreateSlider({
-    Name = "Hitbox Size",
-    Range = {2, 10},
-    Increment = 1,
-    CurrentValue = 6,
-    Callback = function(v)
-        Combat.HitboxSize = v
-        if Combat.Hitbox then
-            ClearHitbox()
-            for _,p in pairs(Players:GetPlayers()) do
-                ApplyHitbox(p)
-            end
-        end
-    end
-})
-
 CombatTab:CreateToggle({
     Name = "Aim Head",
     Callback = function(v)
@@ -379,19 +324,35 @@ CombatTab:CreateToggle({
 })
 
 CombatTab:CreateToggle({
-    Name = "Enable POV",
+    Name = "Enable POV (FOV)",
     Callback = function(v)
         Combat.POV = v
     end
 })
 
+CombatTab:CreateToggle({
+    Name = "Show POV Circle",
+    Callback = function(v)
+        Combat.ShowCircle = v
+    end
+})
+
 CombatTab:CreateSlider({
     Name = "POV Radius",
-    Range = {50, 300},
+    Range = {50, 350},
     Increment = 10,
-    CurrentValue = 120,
+    CurrentValue = 150,
     Callback = function(v)
         Combat.POVRadius = v
+    end
+})
+
+CombatTab:CreateDropdown({
+    Name = "Target Priority",
+    Options = {"Crosshair", "Distance", "Health"},
+    CurrentOption = "Crosshair",
+    Callback = function(v)
+        Combat.Priority = v
     end
 })
 
