@@ -48,7 +48,7 @@ local Maps = {
     ["DESERT"] = "https://raw.githubusercontent.com/USER/REPO/main/desert.lua",
     ["CITY"]   = "https://raw.githubusercontent.com/USER/REPO/main/city.lua",
     ["SNOW"]   = "https://raw.githubusercontent.com/USER/REPO/main/snow.lua",
-    ["FOREST"] = "https://raw.githubusercontent.com/USER/REPO/main/forest.lua"
+    ["tes"] = "https://raw.githubusercontent.com/USER/REPO/main/forest.lua"
 }
 
 print("TOTAL MAP:", table.getn(Maps)) -- debug
