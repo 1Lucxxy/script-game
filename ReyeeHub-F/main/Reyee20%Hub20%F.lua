@@ -45,8 +45,8 @@ Layout.Padding = UDim.new(0,12)
 -- GANTI NAMA & LINK DI SINI
 --==============================
 local Maps = {
-    ["DESERT"] = "https://raw.githubusercontent.com/USER/REPO/main/desert.lua",
-    ["CITY"]   = "https://raw.githubusercontent.com/1Lucxxy/Fayyxiee/refs/heads/main/Script-Games/main/aimbot.lua",
+    ["VIOLENCE DISTRICT"] = "https://raw.githubusercontent.com/1Lucxxy/Fayyxiee/refs/heads/main/Script-Games/main/violencedistrict.lua",
+    ["AIMBOT"]   = "https://raw.githubusercontent.com/1Lucxxy/Fayyxiee/refs/heads/main/Script-Games/main/aimbot.lua",
     ["SNOW"]   = "https://raw.githubusercontent.com/USER/REPO/main/snow.lua",
     ["FOREST"] = "https://raw.githubusercontent.com/USER/REPO/main/forest.lua"
 }
