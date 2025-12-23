@@ -1,9 +1,9 @@
--- SERVICES
+-- ================= SERVICES =================
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
--- LOAD RAYFIELD
+-- ================= LOAD RAYFIELD =================
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
@@ -15,7 +15,7 @@ local Window = Rayfield:CreateWindow({
 
 local VisualTab = Window:CreateTab("Visual", 4483362458)
 
--- SETTINGS (MASTER)
+-- ================= SETTINGS =================
 local Settings = {
     Enabled = false,
     TeamCheck = true,
@@ -24,11 +24,10 @@ local Settings = {
     Color = Color3.fromRGB(255, 0, 0)
 }
 
--- CACHE
+-- ================= CACHE =================
 local Cache = {}
 
 -- ================= UTILS =================
-
 local function IsEnemy(p)
     if not Settings.TeamCheck then return true end
     if not p.Team or not LocalPlayer.Team then return true end
@@ -40,9 +39,9 @@ local function ClearESP(p)
         if Cache[p].Loop then
             task.cancel(Cache[p].Loop)
         end
-        for _,obj in pairs(Cache[p]) do
-            if typeof(obj) == "Instance" then
-                obj:Destroy()
+        for _,v in pairs(Cache[p]) do
+            if typeof(v) == "Instance" then
+                v:Destroy()
             end
         end
         Cache[p] = nil
@@ -56,7 +55,6 @@ local function ClearAll()
 end
 
 -- ================= APPLY ESP =================
-
 local function ApplyESP(p)
     if not Settings.Enabled then return end
     if p == LocalPlayer then return end
@@ -71,7 +69,7 @@ local function ApplyESP(p)
     local hum = char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum or hum.Health <= 0 then return end
 
-    -- HIGHLIGHT (VISIBLE 0.8)
+    -- 🔴 HIGHLIGHT BODY
     local hl = Instance.new("Highlight")
     hl.Adornee = char
     hl.Parent = CoreGui
@@ -81,11 +79,11 @@ local function ApplyESP(p)
     hl.FillColor = Settings.Color
     Cache[p].Highlight = hl
 
-    -- BILLBOARD (SEDIKIT LEBIH BESAR)
+    -- 🏷️ BILLBOARD (UKURAN AMAN, SEDIKIT BESAR)
     local gui = Instance.new("BillboardGui")
     gui.Adornee = hrp
-    gui.Size = UDim2.fromScale(4.8, 1.4)
-    gui.StudsOffset = Vector3.new(0, 3.4, 0)
+    gui.Size = UDim2.fromScale(5, 1.6)
+    gui.StudsOffset = Vector3.new(0, 3.5, 0)
     gui.AlwaysOnTop = true
     gui.Parent = CoreGui
     Cache[p].Billboard = gui
@@ -100,14 +98,17 @@ local function ApplyESP(p)
     txt.Parent = gui
     Cache[p].Text = txt
 
-    -- LOOP
+    -- 🔄 LOOP UPDATE (ANTI ERROR DELTA)
     Cache[p].Loop = task.spawn(function()
         while Settings.Enabled and hum.Health > 0 do
             if not IsEnemy(p) then break end
 
             local myChar = LocalPlayer.Character
             local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
-            if not myHRP then break end
+            if not myHRP then
+                task.wait()
+                continue
+            end
 
             local dist = math.floor((myHRP.Position - hrp.Position).Magnitude)
 
@@ -122,7 +123,6 @@ local function ApplyESP(p)
 end
 
 -- ================= PLAYER HANDLER =================
-
 local function SetupPlayer(p)
     p.CharacterAdded:Connect(function()
         task.wait(0.4)
@@ -144,7 +144,6 @@ Players.PlayerAdded:Connect(SetupPlayer)
 Players.PlayerRemoving:Connect(ClearESP)
 
 -- ================= UI =================
-
 VisualTab:CreateToggle({
     Name = "Enable Highlight (MASTER)",
     Callback = function(v)
