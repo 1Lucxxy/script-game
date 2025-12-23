@@ -71,20 +71,21 @@ local function ApplyESP(p)
     local hum = char:FindFirstChildOfClass("Humanoid")
     if not hrp or not hum or hum.Health <= 0 then return end
 
-    -- HIGHLIGHT (STABLE)
+    -- HIGHLIGHT (VISIBLE 0.8)
     local hl = Instance.new("Highlight")
     hl.Adornee = char
     hl.Parent = CoreGui
     hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     hl.OutlineTransparency = 1
+    hl.FillTransparency = 0.8
     hl.FillColor = Settings.Color
     Cache[p].Highlight = hl
 
-    -- BILLBOARD
+    -- BILLBOARD (SEDIKIT LEBIH BESAR)
     local gui = Instance.new("BillboardGui")
     gui.Adornee = hrp
-    gui.Size = UDim2.fromScale(4, 1)
-    gui.StudsOffset = Vector3.new(0, 3, 0)
+    gui.Size = UDim2.fromScale(4.8, 1.4)
+    gui.StudsOffset = Vector3.new(0, 3.4, 0)
     gui.AlwaysOnTop = true
     gui.Parent = CoreGui
     Cache[p].Billboard = gui
@@ -99,16 +100,16 @@ local function ApplyESP(p)
     txt.Parent = gui
     Cache[p].Text = txt
 
-    -- LOOP (MASTER SAFE)
+    -- LOOP
     Cache[p].Loop = task.spawn(function()
         while Settings.Enabled and hum.Health > 0 do
-            if not Settings.Enabled or not IsEnemy(p) then
-                break
-            end
+            if not IsEnemy(p) then break end
 
-            local dist = math.floor(
-                (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-            )
+            local myChar = LocalPlayer.Character
+            local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+            if not myHRP then break end
+
+            local dist = math.floor((myHRP.Position - hrp.Position).Magnitude)
 
             txt.Text =
                 (Settings.ShowName and p.Name or "") ..
@@ -140,9 +141,7 @@ for _,p in pairs(Players:GetPlayers()) do
 end
 
 Players.PlayerAdded:Connect(SetupPlayer)
-Players.PlayerRemoving:Connect(function(p)
-    ClearESP(p)
-end)
+Players.PlayerRemoving:Connect(ClearESP)
 
 -- ================= UI =================
 
@@ -205,7 +204,6 @@ VisualTab:CreateColorPicker({
     end
 })
 
--- 🔄 REFRESH BUTTON
 VisualTab:CreateButton({
     Name = "Refresh Highlight",
     Callback = function()
