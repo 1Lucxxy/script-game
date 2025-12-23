@@ -1,16 +1,14 @@
 -- SERVICES
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Camera = workspace.CurrentCamera
+local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
--- LOAD RAYFIELD
+-- RAYFIELD
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
--- WINDOW
 local Window = Rayfield:CreateWindow({
-    Name = "Visual ESP",
-    LoadingTitle = "Visual Loading",
+    Name = "Delta Visual FIX",
+    LoadingTitle = "Stable Visual",
     LoadingSubtitle = "by dafaaa",
     ConfigurationSaving = { Enabled = false }
 })
@@ -21,167 +19,168 @@ local VisualTab = Window:CreateTab("Visual", 4483362458)
 local Settings = {
     Enabled = false,
     TeamCheck = true,
-
-    Box = false,
-    Line = false,
-    Name = false,
-    Health = false,
-    Distance = false,
-    Skeleton = false,
-
-    Color = Color3.fromRGB(255,0,0)
+    Color = Color3.fromRGB(255,0,0),
+    ShowName = true,
+    ShowDistance = true
 }
 
--- STORAGE
-local ESP = {}
+-- CACHE
+local Cache = {}
 
 -- UTILS
-local function New(type, props)
-    local obj = Drawing.new(type)
-    for i,v in pairs(props) do obj[i] = v end
-    return obj
-end
-
-local function IsEnemy(player)
+local function IsEnemy(p)
     if not Settings.TeamCheck then return true end
-    if player.Team == nil or LocalPlayer.Team == nil then return true end
-    return player.Team ~= LocalPlayer.Team
+    if not p.Team or not LocalPlayer.Team then return true end
+    return p.Team ~= LocalPlayer.Team
 end
 
--- CREATE ESP
-local function CreateESP(player)
-    if player == LocalPlayer then return end
-
-    ESP[player] = {
-        Box = New("Square",{Thickness=2,Filled=false,Visible=false}),
-        Line = New("Line",{Thickness=2,Visible=false}),
-        Name = New("Text",{Size=15,Center=true,Outline=true,Visible=false}),
-        Distance = New("Text",{Size=14,Center=true,Outline=true,Visible=false}),
-        Health = New("Line",{Thickness=3,Visible=false}),
-        Skeleton = {}
-    }
-end
-
--- REMOVE ESP
-local function RemoveESP(player)
-    if ESP[player] then
-        for _,v in pairs(ESP[player]) do
-            if typeof(v) == "table" then
-                for _,l in pairs(v) do l:Remove() end
-            elseif typeof(v) == "userdata" then
-                v:Remove()
+local function ClearESP(p)
+    if Cache[p] then
+        for _,obj in pairs(Cache[p]) do
+            if typeof(obj) == "Instance" then
+                obj:Destroy()
             end
         end
-        ESP[player] = nil
+        Cache[p] = nil
     end
 end
 
--- SKELETON
-local Bones = {
-    {"Head","UpperTorso"},{"UpperTorso","LowerTorso"},
-    {"UpperTorso","LeftUpperArm"},{"LeftUpperArm","LeftLowerArm"},
-    {"UpperTorso","RightUpperArm"},{"RightUpperArm","RightLowerArm"},
-    {"LowerTorso","LeftUpperLeg"},{"LeftUpperLeg","LeftLowerLeg"},
-    {"LowerTorso","RightUpperLeg"},{"RightUpperLeg","RightLowerLeg"}
-}
+-- APPLY ESP
+local function ApplyESP(p)
+    if p == LocalPlayer then return end
+    if not Settings.Enabled then return end
+    if not IsEnemy(p) then return end
+    if not p.Character then return end
 
-local function UpdateSkeleton(player,char,color)
-    ESP[player].Skeleton = ESP[player].Skeleton or {}
-    for i,bone in ipairs(Bones) do
-        local p1 = char:FindFirstChild(bone[1])
-        local p2 = char:FindFirstChild(bone[2])
-        if p1 and p2 then
-            local v1,on1 = Camera:WorldToViewportPoint(p1.Position)
-            local v2,on2 = Camera:WorldToViewportPoint(p2.Position)
-            if on1 and on2 then
-                local line = ESP[player].Skeleton[i] or New("Line",{Thickness=1})
-                line.From = Vector2.new(v1.X,v1.Y)
-                line.To = Vector2.new(v2.X,v2.Y)
-                line.Color = color
-                line.Visible = true
-                ESP[player].Skeleton[i] = line
+    ClearESP(p)
+    Cache[p] = {}
+
+    local char = p.Character
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum or hum.Health <= 0 then return end
+
+    -- HIGHLIGHT (STABLE)
+    local hl = Instance.new("Highlight")
+    hl.Adornee = char
+    hl.Parent = CoreGui
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.OutlineTransparency = 1
+    hl.FillColor = Settings.Color
+    Cache[p].Highlight = hl
+
+    -- BILLBOARD
+    local gui = Instance.new("BillboardGui")
+    gui.Adornee = hrp
+    gui.Size = UDim2.fromScale(4,1)
+    gui.StudsOffset = Vector3.new(0,3,0)
+    gui.AlwaysOnTop = true
+    gui.Parent = CoreGui
+    Cache[p].Billboard = gui
+
+    local txt = Instance.new("TextLabel")
+    txt.BackgroundTransparency = 1
+    txt.Size = UDim2.fromScale(1,1)
+    txt.TextScaled = true
+    txt.Font = Enum.Font.GothamBold
+    txt.TextStrokeTransparency = 0
+    txt.TextColor3 = Settings.Color
+    txt.Parent = gui
+    Cache[p].Text = txt
+
+    -- UPDATE LOOP
+    task.spawn(function()
+        while Settings.Enabled and hum.Health > 0 do
+            if not IsEnemy(p) then
+                ClearESP(p)
+                break
             end
+
+            local dist = math.floor(
+                (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+            )
+
+            txt.Text =
+                (Settings.ShowName and p.Name or "") ..
+                (Settings.ShowDistance and ("\n["..dist.."m]") or "")
+
+            task.wait(0.25)
         end
+        ClearESP(p)
+    end)
+end
+
+-- PLAYER HANDLER
+local function SetupPlayer(p)
+    p.CharacterAdded:Connect(function()
+        task.wait(0.5)
+        ApplyESP(p)
+    end)
+    if p.Character then
+        ApplyESP(p)
     end
 end
 
--- PLAYER HANDLING
-for _,p in pairs(Players:GetPlayers()) do CreateESP(p) end
-Players.PlayerAdded:Connect(CreateESP)
-Players.PlayerRemoving:Connect(RemoveESP)
+for _,p in pairs(Players:GetPlayers()) do
+    SetupPlayer(p)
+end
 
--- MAIN LOOP (OPTIMIZED)
-RunService.RenderStepped:Connect(function()
-    for player,draw in pairs(ESP) do
-        if not Settings.Enabled or not IsEnemy(player) then
-            for _,v in pairs(draw) do
-                if typeof(v)=="userdata" then v.Visible=false end
-            end
-            continue
-        end
-
-        local char = player.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        local hum = char and char:FindFirstChildOfClass("Humanoid")
-
-        if hrp and hum and hum.Health>0 then
-            local pos,on = Camera:WorldToViewportPoint(hrp.Position)
-            if on then
-                local size = Vector2.new(2000/pos.Z,3000/pos.Z)
-                local color = Settings.Color
-                local dist = math.floor((LocalPlayer.Character.HumanoidRootPart.Position-hrp.Position).Magnitude)
-
-                -- BOX
-                draw.Box.Position = Vector2.new(pos.X-size.X/2,pos.Y-size.Y/2)
-                draw.Box.Size = size
-                draw.Box.Color = color
-                draw.Box.Visible = Settings.Box
-
-                -- LINE
-                draw.Line.From = Vector2.new(Camera.ViewportSize.X/2,Camera.ViewportSize.Y)
-                draw.Line.To = Vector2.new(pos.X,pos.Y)
-                draw.Line.Color = color
-                draw.Line.Visible = Settings.Line
-
-                -- NAME
-                draw.Name.Text = player.Name
-                draw.Name.Position = Vector2.new(pos.X,pos.Y-size.Y/2-14)
-                draw.Name.Color = color
-                draw.Name.Visible = Settings.Name
-
-                -- DISTANCE
-                draw.Distance.Text = dist.."m"
-                draw.Distance.Position = Vector2.new(pos.X,pos.Y+size.Y/2+2)
-                draw.Distance.Color = color
-                draw.Distance.Visible = Settings.Distance
-
-                -- HEALTH
-                local hp = hum.Health/hum.MaxHealth
-                draw.Health.From = Vector2.new(pos.X-size.X/2-5,pos.Y+size.Y/2)
-                draw.Health.To = Vector2.new(pos.X-size.X/2-5,pos.Y+size.Y/2-(size.Y*hp))
-                draw.Health.Color = Color3.fromRGB(255-(hp*255),hp*255,0)
-                draw.Health.Visible = Settings.Health
-
-                -- SKELETON
-                if Settings.Skeleton then
-                    UpdateSkeleton(player,char,color)
-                end
-            end
-        end
-    end
+Players.PlayerRemoving:Connect(function(p)
+    ClearESP(p)
 end)
 
 -- UI
-VisualTab:CreateToggle({Name="Enable Visual",Callback=function(v)Settings.Enabled=v end})
-VisualTab:CreateToggle({Name="Team Check",CurrentValue=true,Callback=function(v)Settings.TeamCheck=v end})
-VisualTab:CreateToggle({Name="Box ESP",Callback=function(v)Settings.Box=v end})
-VisualTab:CreateToggle({Name="Line ESP",Callback=function(v)Settings.Line=v end})
-VisualTab:CreateToggle({Name="Name ESP",Callback=function(v)Settings.Name=v end})
-VisualTab:CreateToggle({Name="Distance ESP",Callback=function(v)Settings.Distance=v end})
-VisualTab:CreateToggle({Name="Health Bar",Callback=function(v)Settings.Health=v end})
-VisualTab:CreateToggle({Name="Skeleton ESP",Callback=function(v)Settings.Skeleton=v end})
+VisualTab:CreateToggle({
+    Name = "Enable Highlight",
+    Callback = function(v)
+        Settings.Enabled = v
+        for _,p in pairs(Players:GetPlayers()) do
+            ClearESP(p)
+            if v then ApplyESP(p) end
+        end
+    end
+})
+
+VisualTab:CreateToggle({
+    Name = "Team Check",
+    CurrentValue = true,
+    Callback = function(v)
+        Settings.TeamCheck = v
+        for _,p in pairs(Players:GetPlayers()) do
+            ClearESP(p)
+            ApplyESP(p)
+        end
+    end
+})
+
+VisualTab:CreateToggle({
+    Name = "Show Name",
+    CurrentValue = true,
+    Callback = function(v)
+        Settings.ShowName = v
+    end
+})
+
+VisualTab:CreateToggle({
+    Name = "Show Distance",
+    CurrentValue = true,
+    Callback = function(v)
+        Settings.ShowDistance = v
+    end
+})
+
 VisualTab:CreateColorPicker({
-    Name="ESP Color",
-    Color=Settings.Color,
-    Callback=function(c)Settings.Color=c end
+    Name = "Highlight Color",
+    Color = Settings.Color,
+    Callback = function(c)
+        Settings.Color = c
+        for _,data in pairs(Cache) do
+            if data.Highlight then
+                data.Highlight.FillColor = c
+            end
+            if data.Text then
+                data.Text.TextColor3 = c
+            end
+        end
+    end
 })
