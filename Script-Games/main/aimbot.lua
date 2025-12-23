@@ -1,10 +1,10 @@
--- BASIC ORION TEST
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source.lua"))()
+local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
 
 local Window = OrionLib:MakeWindow({
-    Name = "Orion Test",
+    Name = "My GUI",
     HidePremium = false,
-    SaveConfig = false
+    SaveConfig = true,
+    ConfigFolder = "MyConfig"
 })
 
 local Tab = Window:MakeTab({
@@ -14,9 +14,9 @@ local Tab = Window:MakeTab({
 })
 
 Tab:AddButton({
-    Name = "Hello World",
+    Name = "Hello",
     Callback = function()
-        print("ORION WORKING")
+        print("Hello Orion")
     end
 })
 
