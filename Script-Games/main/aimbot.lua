@@ -3,24 +3,29 @@ local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
 
--- LOAD RAYFIELD
+-- RAYFIELD
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "Delta Visual FINAL",
-    LoadingTitle = "Stable Visual",
+    Name = "Delta Visual MAX",
+    LoadingTitle = "Visual Loading",
     LoadingSubtitle = "by dafaaa",
     ConfigurationSaving = { Enabled = false }
 })
 
 local VisualTab = Window:CreateTab("Visual", 4483362458)
 
--- SETTINGS (MASTER)
+-- SETTINGS
 local Settings = {
     Enabled = false,
     TeamCheck = true,
+
     ShowName = true,
     ShowDistance = true,
+    Highlight = true,
+    Box = true,
+    Line = true,
+
     Color = Color3.fromRGB(255, 0, 0)
 }
 
@@ -37,11 +42,10 @@ end
 
 local function ClearESP(p)
     if Cache[p] then
-        if Cache[p].Loop then
-            task.cancel(Cache[p].Loop)
-        end
         for _,obj in pairs(Cache[p]) do
-            if typeof(obj) == "Instance" then
+            if typeof(obj) == "RBXScriptConnection" then
+                obj:Disconnect()
+            elseif typeof(obj) == "Instance" then
                 obj:Destroy()
             end
         end
@@ -69,47 +73,76 @@ local function ApplyESP(p)
     local char = p.Character
     local hrp = char:FindFirstChild("HumanoidRootPart")
     local hum = char:FindFirstChildOfClass("Humanoid")
-    if not hrp or not hum or hum.Health <= 0 then return end
+    local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
-    -- HIGHLIGHT (STABLE)
-    local hl = Instance.new("Highlight")
-    hl.Adornee = char
-    hl.Parent = CoreGui
-    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    hl.OutlineTransparency = 1
-    hl.FillColor = Settings.Color
-    Cache[p].Highlight = hl
+    if not hrp or not hum or not myHRP or hum.Health <= 0 then return end
 
-    -- BILLBOARD
+    -- 🔴 HIGHLIGHT BODY
+    if Settings.Highlight then
+        local hl = Instance.new("Highlight")
+        hl.Adornee = char
+        hl.Parent = CoreGui
+        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        hl.FillColor = Settings.Color
+        hl.FillTransparency = 0.8
+        hl.OutlineTransparency = 1
+        Cache[p].Highlight = hl
+    end
+
+    -- 📦 BOX (3D)
+    if Settings.Box then
+        local box = Instance.new("SelectionBox")
+        box.Adornee = char
+        box.Color3 = Settings.Color
+        box.LineThickness = 0.05
+        box.SurfaceTransparency = 1
+        box.Parent = CoreGui
+        Cache[p].Box = box
+    end
+
+    -- 📏 LINE (3D BEAM)
+    if Settings.Line then
+        local att0 = Instance.new("Attachment", myHRP)
+        local att1 = Instance.new("Attachment", hrp)
+
+        local beam = Instance.new("Beam")
+        beam.Attachment0 = att0
+        beam.Attachment1 = att1
+        beam.Width0 = 0.1
+        beam.Width1 = 0.1
+        beam.Color = ColorSequence.new(Settings.Color)
+        beam.FaceCamera = true
+        beam.Parent = CoreGui
+
+        Cache[p].Beam = beam
+        Cache[p].Att0 = att0
+        Cache[p].Att1 = att1
+    end
+
+    -- 🏷️ NAME + DISTANCE
     local gui = Instance.new("BillboardGui")
     gui.Adornee = hrp
-    gui.Size = UDim2.fromScale(4, 1)
-    gui.StudsOffset = Vector3.new(0, 3, 0)
+    gui.Size = UDim2.fromScale(5, 2)
+    gui.StudsOffset = Vector3.new(0, 4, 0)
     gui.AlwaysOnTop = true
     gui.Parent = CoreGui
-    Cache[p].Billboard = gui
+    Cache[p].Gui = gui
 
     local txt = Instance.new("TextLabel")
     txt.BackgroundTransparency = 1
     txt.Size = UDim2.fromScale(1, 1)
     txt.TextScaled = true
-    txt.Font = Enum.Font.GothamBold
+    txt.Font = Enum.Font.GothamBlack
     txt.TextStrokeTransparency = 0
     txt.TextColor3 = Settings.Color
     txt.Parent = gui
     Cache[p].Text = txt
 
-    -- LOOP (MASTER SAFE)
     Cache[p].Loop = task.spawn(function()
         while Settings.Enabled and hum.Health > 0 do
-            if not Settings.Enabled or not IsEnemy(p) then
-                break
-            end
+            if not IsEnemy(p) then break end
 
-            local dist = math.floor(
-                (LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-            )
-
+            local dist = math.floor((myHRP.Position - hrp.Position).Magnitude)
             txt.Text =
                 (Settings.ShowName and p.Name or "") ..
                 (Settings.ShowDistance and ("\n[" .. dist .. "m]") or "")
@@ -140,9 +173,7 @@ for _,p in pairs(Players:GetPlayers()) do
 end
 
 Players.PlayerAdded:Connect(SetupPlayer)
-Players.PlayerRemoving:Connect(function(p)
-    ClearESP(p)
-end)
+Players.PlayerRemoving:Connect(ClearESP)
 
 -- ================= UI =================
 
@@ -173,39 +204,24 @@ VisualTab:CreateToggle({
     end
 })
 
-VisualTab:CreateToggle({
-    Name = "Show Name",
-    CurrentValue = true,
-    Callback = function(v)
-        Settings.ShowName = v
-    end
-})
-
-VisualTab:CreateToggle({
-    Name = "Show Distance",
-    CurrentValue = true,
-    Callback = function(v)
-        Settings.ShowDistance = v
-    end
-})
+VisualTab:CreateToggle({ Name = "Body Highlight", CurrentValue = true, Callback = function(v) Settings.Highlight = v end })
+VisualTab:CreateToggle({ Name = "Box Highlight", CurrentValue = true, Callback = function(v) Settings.Box = v end })
+VisualTab:CreateToggle({ Name = "Line (Beam)", CurrentValue = true, Callback = function(v) Settings.Line = v end })
 
 VisualTab:CreateColorPicker({
-    Name = "Highlight Color",
+    Name = "ESP Color",
     Color = Settings.Color,
     Callback = function(c)
         Settings.Color = c
-        for _,data in pairs(Cache) do
-            if data.Highlight then
-                data.Highlight.FillColor = c
-            end
-            if data.Text then
-                data.Text.TextColor3 = c
+        ClearAll()
+        if Settings.Enabled then
+            for _,p in pairs(Players:GetPlayers()) do
+                ApplyESP(p)
             end
         end
     end
 })
 
--- 🔄 REFRESH BUTTON
 VisualTab:CreateButton({
     Name = "Refresh Highlight",
     Callback = function()
