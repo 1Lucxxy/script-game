@@ -40,6 +40,7 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
+-- GUI Setup
 local gui = Instance.new("ScreenGui")
 gui.ResetOnSpawn = false
 gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
@@ -52,9 +53,11 @@ frame.BackgroundTransparency = 0.15
 frame.BorderSizePixel = 0
 frame.Parent = gui
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
-Instance.new("UIStroke", frame).Thickness = 2.5
-Instance.new("UIStroke", frame).Color = Color3.fromRGB(255, 255, 255)
-Instance.new("UIStroke", frame).Transparency = 0.3
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2.5
+stroke.Color = Color3.fromRGB(255, 255, 255)
+stroke.Transparency = 0.3
+stroke.Parent = frame
 
 local avatar = Instance.new("ImageLabel")
 avatar.Size = UDim2.new(0, 44, 0, 44)
@@ -67,56 +70,43 @@ Instance.new("UICorner", avatar).CornerRadius = UDim.new(1, 0)
 local button = Instance.new("TextButton")
 button.Size = UDim2.new(0, 124, 0, 44)
 button.Position = UDim2.new(0, 58, 0, 6)
-button.BackgroundTransparency = 1
+button.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- hitam
+button.BackgroundTransparency = 0.8 -- visibility 0.8
 button.Text = "Toggle Aimbot"
-button.TextColor3 = Color3.new(1, 1, 1)
+button.TextColor3 = Color3.new(1, 1, 1) -- putih default
 button.Font = Enum.Font.GothamBold
 button.TextSize = 18
 button.TextXAlignment = Enum.TextXAlignment.Left
 button.Parent = frame
 
+-- Toggle Aimbot
 local function toggle()
     camlockState = not camlockState
-    if camlockState then enemy = FindNearestEnemy() else enemy = nil end
+    if camlockState then
+        enemy = FindNearestEnemy()
+        button.TextColor3 = Color3.fromRGB(0, 255, 0) -- hijau ketika aktif
+    else
+        enemy = nil
+        button.TextColor3 = Color3.fromRGB(255, 255, 255) -- putih ketika mati
+    end
 end
 
 button.MouseButton1Click:Connect(toggle)
-
 UserInputService.InputBegan:Connect(function(input, gp)
-    if not gp and input.KeyCode == Enum.KeyCode.T then toggle() end
-end)
-
-local dragging, dragStart, startPos
-button.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
+    if not gp and input.KeyCode == Enum.KeyCode.T then
+        toggle()
     end
 end)
 
-button.InputEnded:Connect(function()
-    dragging = false
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
+-- Drag & Double-Tap Lock for Mobile
 local dragging, dragStart, startPos
 local guiLocked = false
 local lastTapTime = 0
-local doubleTapDelay = 0.3 -- 0.3 detik untuk double tap
+local doubleTapDelay = 0.3
 
--- Drag logic
 button.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         local currentTime = tick()
-        
-        -- Double-tap detection untuk lock/unlock GUI
         if currentTime - lastTapTime <= doubleTapDelay then
             guiLocked = not guiLocked
             lastTapTime = 0
@@ -145,4 +135,3 @@ UserInputService.InputChanged:Connect(function(input)
         frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
     end
 end)
-
