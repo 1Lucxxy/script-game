@@ -9,7 +9,7 @@ local vim = game:GetService("VirtualInputManager")
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Window = Rayfield:CreateWindow({
     Name = "Lucxx Hub V2 Full",
-    LoadingTitle = "Lucxx Hub",
+    LoadingTitle = "FeyyHub",
     LoadingSubtitle = "by Lucxxy",
     ConfigurationSaving = {
         Enabled = true,
@@ -20,6 +20,11 @@ local Window = Rayfield:CreateWindow({
 })
 
 -- // Tabs
+-- Tambahkan tab dummy supaya Rayfield GUI muncul, tapi kosong
+local DummyTab = Window:CreateTab("Home", 4483362458)
+DummyTab:CreateLabel({ Name = "Welcome", Text = "Lucxx Hub V2 Full" })
+
+-- Combat Tab
 local CombatTab = Window:CreateTab("Combat", 4483362458)
 
 -- ======================================================
