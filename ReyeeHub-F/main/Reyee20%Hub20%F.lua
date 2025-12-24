@@ -72,7 +72,7 @@ local Scripts = {
         Callback = function()
             loadstring(game:HttpGet("https://raw.githubusercontent.com/34f3f/forsaken.github.io/refs/heads/main/ringtabublik.lua"))()
         end
-    }
+    },
     {
         Name = "BladeBall",
         Callback = function()
