@@ -64,7 +64,7 @@ local Scripts = {
     {
         Name = "LaggerSab",
         Callback = function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/khelzzz/x/refs/heads/main/best-lagger"))() 
+            loadstring(game:HttpGet("https://pastefy.app/FDtZgMii/raw"))() 
         end
     },
     {
