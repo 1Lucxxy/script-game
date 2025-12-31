@@ -50,55 +50,27 @@ Layout.Parent = Scroll
 -- SCRIPT LIST (TAMBAH DI SINI)
 local Scripts = {
     {
-        Name = "LaggerSab",
+        Name = "Chilli Hub",
         Callback = function()
-            loadstring(game:HttpGet("https://pastefy.app/FDtZgMii/raw"))() 
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/Vcsk/RobloxScripts/main/HitboxExpander.lua"))() 
         end
     },
     {
-        Name = "Violence District",
+        Name = "Lennon Hub",
         Callback = function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/1Lucxxy/Fayyxiee/refs/heads/main/Script-Games/main/violencedistrict.lua"))()
+            loadstring(game:HttpGet("https://pastefy.app/MJw2J4T6/raw"))()
         end
     },
     {
-        Name = "Fly",
+        Name = "Mirranda Hub",
         Callback = function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+            loadstring(game:HttpGet("https://pastefy.app/JJVhs3rK/raw"))()
         end
     },
     {
-        Name = "Duelling",
+        Name = "Kurd Hub",
         Callback = function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/NysaDanielle/loader/refs/heads/main/auth"))()
-        end
-    },
-    {
-        Name = "Gunung",
-        Callback = function()
-            loadstring(game:HttpGet("https://bantaigunung.my.id/script/BantaiXmarV.lua"))()
-        end
-    },
-    {
-        Name = "AimbotToggle",
-        Callback = function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/1Lucxxy/Fayyxiee/refs/heads/main/Script-Games/main/toggleaimbot.lua"))()
-        end
-    },
-    {
-        Name = "Combat",
-        Callback = function()
-            loadstring(game:HttpGet("https://pastefy.app/CZWxFoTG/raw"))()
-        end
-    },
-    {
-        Name = "Ink Game",
-        Callback = function()
-            shared.CustomCommit = "8dd5a2e401a7624d73c2fbf1cd3376ff9d363b89"
-shared.TestingMode = true
-shared.StagingMode = true
-shared.BYPASS_VW_PROTECTION = true
-loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/inkgame.lua", true))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/Ninja10908/S4/refs/heads/main/Kurdhub"))()
         end
     }
 }
