@@ -50,9 +50,9 @@ Layout.Parent = Scroll
 -- SCRIPT LIST (TAMBAH DI SINI)
 local Scripts = {
     {
-        Name = "Fly",
+        Name = "LaggerSab",
         Callback = function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
+            loadstring(game:HttpGet("https://pastefy.app/FDtZgMii/raw"))() 
         end
     },
     {
@@ -62,9 +62,9 @@ local Scripts = {
         end
     },
     {
-        Name = "LaggerSab",
+        Name = "Fly",
         Callback = function()
-            loadstring(game:HttpGet("https://pastefy.app/FDtZgMii/raw"))() 
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))()
         end
     },
     {
