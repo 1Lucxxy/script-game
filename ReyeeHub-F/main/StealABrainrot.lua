@@ -72,6 +72,12 @@ local Scripts = {
         Callback = function()
             loadstring(game:HttpGet("https://raw.githubusercontent.com/Ninja10908/S4/refs/heads/main/Kurdhub"))()
         end
+    },
+    {
+        Name ="Invisible",
+        Callback = function()
+            loadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/550a5d09159b57910ec10b1d96b45298.lua"))()
+        end
     }
 }
 
